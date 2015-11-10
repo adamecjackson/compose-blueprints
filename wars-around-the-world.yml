@@ -1,9 +1,4 @@
-location:
-  jclouds:aws-ec2:
-    region: us-west-1
-    imageId: us-west-1/ami-f544a3b1
-
-name: wars-around-the-world
+name: wars-around-the-world-nolocationsspeced
 services:
 - type: org.apache.brooklyn.entity.group.DynamicRegionsFabric
   locations:
