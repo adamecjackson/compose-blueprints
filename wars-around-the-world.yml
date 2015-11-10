@@ -1,0 +1,44 @@
+location:
+  jclouds:aws-ec2:
+    region: us-west-1
+    imageId: us-west-1/ami-f544a3b1
+
+name: wars-around-the-world
+services:
+- type: org.apache.brooklyn.entity.group.DynamicRegionsFabric
+  locations:
+  - named:AWS Oregon
+  - named:azure-north-europe
+  memberSpec:
+    $brooklyn:entitySpec:
+      type: org.apache.brooklyn.entity.webapp.ControlledDynamicWebAppCluster
+      brooklyn.config:
+        wars.root: http://search.maven.org/remotecontent?filepath=io/brooklyn/example/brooklyn-example-hello-world-sql-webapp/0.7.0-M1/brooklyn-example-hello-world-sql-webapp-0.7.0-M1.war
+        http.port: 9280+
+        proxy.http.port: 9210+
+        java.sysprops:
+          brooklyn.example.db.url: $brooklyn:formatString("jdbc:mysql://%s/%s?user=%s&password=%s", component("db").attributeWhenReady("mapped.endpoint.mysql.port"), "visitors", "brooklyn", "br00k11n")
+
+- type: io.cloudsoft.amp.canopy.compose.apps.CanopyComposeApp
+  defaultDisplayName: MySql app
+  location: named:CIPTAI
+  brooklyn.config:
+    childSpec:
+      $brooklyn:entitySpec:
+        type: brooklyn.entity.database.mysql.MySqlNode
+        id: db
+        name: MySql Server
+        brooklyn.config:
+          datastore.creation.script.url: https://gist.githubusercontent.com/sjcorbett/03fd07b842aad8cb0650/raw/b7f0ce2b7d123f64f27820d86e345daf6b5d5f8b/visitors-creation-script.sql
+          byonIdentity: mysql
+          compose.installSecurityScript: false
+          openIptables: true
+          subnet.publiclyForwardedPorts:
+          - $brooklyn:sensor("brooklyn.entity.database.mysql.MySqlNode", "mysql.port")
+  transformers:
+  - $brooklyn:object:
+      type: io.cloudsoft.amp.canopy.compose.nat.UriTransformerBean
+      brooklyn.config:
+        producerId:   childid
+        sourceSensor: $brooklyn:sensor("brooklyn.entity.database.mysql.MySqlNode", "datastore.url")
+        targetSensor: $brooklyn:sensor("brooklyn.entity.database.mysql.MySqlNode", "datastore.url")
