@@ -1,4 +1,4 @@
-name: wars-around-the-world-nolocationsspeced
+name: wars-around-the-world
 services:
 - type: org.apache.brooklyn.entity.group.DynamicRegionsFabric
   locations:
